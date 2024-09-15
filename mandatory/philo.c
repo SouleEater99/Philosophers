@@ -12,6 +12,7 @@ int     ft_str_are_numbers(char *str)
     }
     while (*str)
     {
+        if (*str < '0' || *str > '9')
             return (0);
         str++;
     }
@@ -24,8 +25,8 @@ int     ft_check_args(t_data *data)
 
         i = 1;
         while (data->av[i])
-        if (ft_str_are_numbers(data->av[i++]) == 0)
-                return (0);
+                if (ft_str_are_numbers(data->av[i++]) == 0)
+                        return (0);
         if (data->n_philo < 0 || data->n_philo_eat < 0 || data->t_die < 0)
                 return (0);
         else if (data->t_eat < 0 || data->t_sleep < 0)
@@ -65,9 +66,7 @@ int     ft_atoi(const char *str)
 t_data  *ft_init_data(int ac, char **av)
 {
         t_data  *data;
-        int     i;
 
-        i = 1;
         data = malloc(sizeof(t_data));
         if (!data)
                 return (NULL);
@@ -98,14 +97,20 @@ int     main(int ac, char **av)
         t_data  *data;
 
         data = NULL;
-        if (ac != 6 || ac != 5 )
+        if (ac != 6 && ac != 5 )
                 return (0);
         data = ft_init_data(ac, av);
         if (!data)
                 return (0);
+        printf("n_philo : %d\n", data->n_philo);
+        printf("n_die : %d\n", data->t_die);
+        printf("n_eat : %d\n", data->t_eat);
+        printf("n_sleep : %d\n", data->t_sleep);
+        printf("n_philo_eat : %d\n", data->n_philo_eat);
+        printf("############################\n");
         if (ft_check_args(data) == 0)
                 ft_free_all(data, "Input Error\n", 1);
-
+        printf("+++++++++++++ { DONE } +++++++++++++++\n");
 
     
         return (0);
