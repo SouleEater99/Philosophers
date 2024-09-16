@@ -63,6 +63,20 @@ int     ft_atoi(const char *str)
         return (count * sign);
 }
 
+void    ft_free_all(t_data *data, char *msg, int status)
+{
+        if (data)
+        {
+                if (data->th)
+                        free(data->th);
+                if (data->forks)
+                        free(data->forks);
+                free(data);
+        }
+        printf("%s", msg);
+        exit(status);
+}
+
 t_data  *ft_init_data(int ac, char **av)
 {
         t_data  *data;
@@ -79,17 +93,42 @@ t_data  *ft_init_data(int ac, char **av)
         data->t_sleep = ft_atoi(av[4]);
         if (ac == 6)
                 data->n_philo_eat = ft_atoi(av[5]);
+        else
+                data->n_philo_eat = -1;
+        data->th = malloc(sizeof(pthread_t) * data->n_philo);
+        data->forks = malloc(sizeof(pthread_mutex_t) * data->n_philo);
+        if (!data->th || !data->forks)
+                ft_free_all(data, "Error in creating fork or threads\n", 1);
         return (data);
 }
 
-void    ft_free_all(t_data *data, char *msg, int status)
+void    ft_destroy_mutex(t_data *data)
 {
-        if (data)
-        {
-                free(data);
-        }
-        printf("%s", msg);
-        exit(status);
+        int     i;
+
+        i = 0;
+        if (!data)
+                return ;
+        while (i < data->n_philo)
+                pthread_mutex_destroy(&data->forks[i++]);
+}
+
+void    ft_init_mutex(t_data *data)
+{
+        int     i;
+
+        i = 0;
+        if (!data)
+                return ;
+        while (i < data->n_philo)
+                pthread_mutex_init(&data->forks[i++], NULL);
+}
+
+
+void    ft_setup_forks(t_data *data)
+{
+
+        
 }
 
 int     main(int ac, char **av)
@@ -102,16 +141,14 @@ int     main(int ac, char **av)
         data = ft_init_data(ac, av);
         if (!data)
                 return (0);
-        printf("n_philo : %d\n", data->n_philo);
-        printf("n_die : %d\n", data->t_die);
-        printf("n_eat : %d\n", data->t_eat);
-        printf("n_sleep : %d\n", data->t_sleep);
-        printf("n_philo_eat : %d\n", data->n_philo_eat);
-        printf("############################\n");
         if (ft_check_args(data) == 0)
                 ft_free_all(data, "Input Error\n", 1);
-        printf("+++++++++++++ { DONE } +++++++++++++++\n");
+        ft_init_mutex(data);
+        ft_setup_forks(data);
+
 
     
+        ft_destroy_mutex(data->forks);
+        printf("+++++++++++++ { DONE} +++++++++++++++\n");
         return (0);
 }

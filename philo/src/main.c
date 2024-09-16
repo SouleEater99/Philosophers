@@ -11,6 +11,7 @@ pthread_mutex_t mutex;
 void *myThreadFun(void *vargp)
 {
     int i = 0;
+	(void) vargp;
     while (i++ < 100000)
 	{
 			pthread_mutex_lock(&mutex);
@@ -20,6 +21,7 @@ void *myThreadFun(void *vargp)
 	pthread_mutex_lock(&mutex);
 	printf("value of a = %d\n",a);
 	pthread_mutex_unlock(&mutex);
+	return (NULL);
 }
 
 int main()
