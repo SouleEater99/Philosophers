@@ -63,6 +63,9 @@ int ft_atoi(const char *str)
         return (count * sign);
 }
 
+
+
+
 void ft_destroy_mutex(t_data *data)
 {
         int i;
@@ -70,20 +73,12 @@ void ft_destroy_mutex(t_data *data)
         i = 0;
         if (!data)
                 return;
+        pthread_mutex_destroy(&data->main_mutex);
         while (i < data->n_philo)
-                pthread_mutex_destroy(&data->forks[i++]); // i need to protect destroy mutex
-}
-
-void ft_init_mutex(t_data *data)
-{
-        int i;
-
-        i = 0;
-        if (!data)
-                return;
-        while (i < data->n_philo)
-                pthread_mutex_init(&data->forks[i++], NULL); // i need to protect mutex creation.
-        data->mutex_flag = 1;
+        {
+                pthread_mutex_destroy(&data->forks[i++]);
+        }
+                        
 }
 
 void ft_free_all(t_data *data, char *msg, int status)
@@ -101,6 +96,22 @@ void ft_free_all(t_data *data, char *msg, int status)
         printf("%s", msg);
         exit(status);
 }
+
+void ft_init_mutex(t_data *data)
+{
+        int i;
+
+        i = 0;
+        if (!data)
+                return;
+        if (pthread_mutex_init(&data->main_mutex, NULL) != 0)
+                ft_free_all(data, "Error in init mutex\n", 3);
+        while (i < data->n_philo)
+                if (pthread_mutex_init(&data->forks[i++], NULL) != 0)
+                        ft_free_all(data, "Error in init mutex\n", 3);
+        data->mutex_flag = 1;
+}
+
 
 t_data *ft_init_data(int ac, char **av)
 {
@@ -175,24 +186,40 @@ void ft_setup_forks(t_data *data)
 void *ft_pthread(void *data2)
 {
         t_data  *data;
+        int     i;
 
         data = (t_data *)data2;
-        printf("+++++ {i : %d} +++++\n", data->i);
+        i = data->i;
+        pthread_mutex_lock(&data->main_mutex);
+        printf("+++++ {i : %d} +++++\n", i);
+        pthread_mutex_unlock(&data->main_mutex);
         return (NULL);
 }
 
 void ft_create_thread(t_data *data, t_philo *philo)
 {
+        t_philo *head;
+        int     j;
+
+        head = philo;
         data->i = 0;
+        j = 0;
+        pthread_mutex_lock(&data->main_mutex);
         while (data->i < data->n_philo)
         {
                 if (pthread_create(&data->th[data->i], NULL, ft_pthread, data) != 0)
                         ft_free_all(data, "Failed Creating Thread\n", 2);
-                philo->id = data->th[data->i++];
+                if (head)
+                {
+                        head->id = data->th[data->i];
+                        head = head->next;
+                }
+                data->i++;
+                sleep(1);
         }
-        data->i = 0;
-        while (data->i < data->n_philo)
-                pthread_join(data->th[data->i++], NULL);
+        pthread_mutex_unlock(&data->main_mutex);
+        while (j < data->n_philo)
+                pthread_join(data->th[j++], NULL);
 }
 
 int main(int ac, char **av)

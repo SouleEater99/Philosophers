@@ -29,7 +29,9 @@ typedef struct  s_data
     int              mutex_flag;
     pthread_t        *th;
     pthread_mutex_t  *forks;
+    pthread_mutex_t  main_mutex;
     t_philo          *philo;
+
 } t_data;
 
 
