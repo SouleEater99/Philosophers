@@ -1,27 +1,27 @@
 #include "./include/philo.h"
 
-int     ft_str_are_numbers(char *str)
+int ft_str_are_numbers(char *str)
 {
-    if (!str || !*str)
-        return (0);
-    if (*str == '+' || *str == '-')
-    {
-        str++;
-        if (!*str)
-            return (0);
-    }
-    while (*str)
-    {
-        if (*str < '0' || *str > '9')
-            return (0);
-        str++;
-    }
-    return (1);
+        if (!str || !*str)
+                return (0);
+        if (*str == '+' || *str == '-')
+        {
+                str++;
+                if (!*str)
+                        return (0);
+        }
+        while (*str)
+        {
+                if (*str < '0' || *str > '9')
+                        return (0);
+                str++;
+        }
+        return (1);
 }
 
-int     ft_check_args(t_data *data)
+int ft_check_args(t_data *data)
 {
-        int     i;
+        int i;
 
         i = 1;
         while (data->av[i])
@@ -34,11 +34,11 @@ int     ft_check_args(t_data *data)
         return (1);
 }
 
-int     ft_atoi(const char *str)
+int ft_atoi(const char *str)
 {
-        int                     i;
-        int                     sign;
-        long long       count;
+        int i;
+        int sign;
+        long long count;
 
         i = 0;
         count = 0;
@@ -63,7 +63,30 @@ int     ft_atoi(const char *str)
         return (count * sign);
 }
 
-void    ft_free_all(t_data *data, char *msg, int status)
+void ft_destroy_mutex(t_data *data)
+{
+        int i;
+
+        i = 0;
+        if (!data)
+                return;
+        while (i < data->n_philo)
+                pthread_mutex_destroy(&data->forks[i++]); // i need to protect destroy mutex
+}
+
+void ft_init_mutex(t_data *data)
+{
+        int i;
+
+        i = 0;
+        if (!data)
+                return;
+        while (i < data->n_philo)
+                pthread_mutex_init(&data->forks[i++], NULL); // i need to protect mutex creation.
+        data->mutex_flag = 1;
+}
+
+void ft_free_all(t_data *data, char *msg, int status)
 {
         if (data)
         {
@@ -71,15 +94,17 @@ void    ft_free_all(t_data *data, char *msg, int status)
                         free(data->th);
                 if (data->forks)
                         free(data->forks);
+                if (data->mutex_flag == 1)
+                        ft_destroy_mutex(data);
                 free(data);
         }
         printf("%s", msg);
         exit(status);
 }
 
-t_data  *ft_init_data(int ac, char **av)
+t_data *ft_init_data(int ac, char **av)
 {
-        t_data  *data;
+        t_data *data;
 
         data = malloc(sizeof(t_data));
         if (!data)
@@ -102,41 +127,80 @@ t_data  *ft_init_data(int ac, char **av)
         return (data);
 }
 
-void    ft_destroy_mutex(t_data *data)
-{
-        int     i;
 
-        i = 0;
-        if (!data)
-                return ;
-        while (i < data->n_philo)
-                pthread_mutex_destroy(&data->forks[i++]);
+
+t_philo *ft_create_node(t_data *data)
+{
+        t_philo *new;
+
+        new = malloc(sizeof(t_philo));
+        if (!new)
+                ft_free_all(data, "Allocation Failed Creating node\n", 1);
+        new = memset(new, 0, sizeof(t_philo));
+        if (data->i == 0)
+                new->left_f = &data->forks[data->n_philo - 1];
+        else
+                new->left_f = &data->forks[data->i - 1];
+        new->rghit_f = &data->forks[data->i];
+        new->next = NULL;
+        return (new);
 }
 
-void    ft_init_mutex(t_data *data)
+void ft_add_node_to_back(t_philo *philo, t_philo *new)
 {
-        int     i;
+        t_philo *head;
 
-        i = 0;
-        if (!data)
-                return ;
-        while (i < data->n_philo)
-                pthread_mutex_init(&data->forks[i++], NULL);
+        head = philo;
+        if (!head)
+                return;
+        while (head->next)
+                head = head->next;
+        if (head)
+                head->next = new;
 }
 
-
-void    ft_setup_forks(t_data *data)
+void ft_setup_forks(t_data *data)
 {
+        t_philo *new;
 
-        
+        new = NULL;
+        data->philo = ft_create_node(data);
+        while (++data->i < data->n_philo)
+        {
+                new = ft_create_node(data);
+                ft_add_node_to_back(data->philo, new);
+        }
 }
 
-int     main(int ac, char **av)
+void *ft_pthread(void *data2)
 {
         t_data  *data;
 
+        data = (t_data *)data2;
+        printf("+++++ {i : %d} +++++\n", data->i);
+        return (NULL);
+}
+
+void ft_create_thread(t_data *data, t_philo *philo)
+{
+        data->i = 0;
+        while (data->i < data->n_philo)
+        {
+                if (pthread_create(&data->th[data->i], NULL, ft_pthread, data) != 0)
+                        ft_free_all(data, "Failed Creating Thread\n", 2);
+                philo->id = data->th[data->i++];
+        }
+        data->i = 0;
+        while (data->i < data->n_philo)
+                pthread_join(data->th[data->i++], NULL);
+}
+
+int main(int ac, char **av)
+{
+        t_data *data;
+
         data = NULL;
-        if (ac != 6 && ac != 5 )
+        if (ac != 6 && ac != 5)
                 return (0);
         data = ft_init_data(ac, av);
         if (!data)
@@ -145,10 +209,9 @@ int     main(int ac, char **av)
                 ft_free_all(data, "Input Error\n", 1);
         ft_init_mutex(data);
         ft_setup_forks(data);
+        ft_create_thread(data, data->philo);
 
-
-    
-        ft_destroy_mutex(data->forks);
+        ft_destroy_mutex(data);
         printf("+++++++++++++ { DONE} +++++++++++++++\n");
         return (0);
 }
