@@ -6,10 +6,13 @@
 # include <unistd.h>
 # include <string.h>
 # include <pthread.h>
+#include <sys/time.h>
+
 
 typedef struct  s_philo
 {
     pthread_t       id;
+    int             index;
     pthread_mutex_t *left_f;
     pthread_mutex_t *rghit_f;
     struct s_philo  *next;
@@ -29,7 +32,9 @@ typedef struct  s_data
     int              mutex_flag;
     pthread_t        *th;
     pthread_mutex_t  *forks;
-    pthread_mutex_t  main_mutex;
+    pthread_mutex_t  main_mutex_left;
+    pthread_mutex_t  main_mutex_right;
+    struct timeval   start;
     t_philo          *philo;
 
 } t_data;

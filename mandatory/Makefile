@@ -13,7 +13,7 @@ $(NAME) : $(SRC)
 clean :
 	rm -rf $(OBJ)
 
-flcean : clean
+fclean : clean
 	rm -rf $(NAME)
 
 re : fclean all
