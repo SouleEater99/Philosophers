@@ -2,7 +2,12 @@ CC = cc
 CFLAG = -Wall -Wextra -Werror #-fsanitize=address -g3
 PTHREAD = -pthread
 NAME = philo
-SRC =  ./philo.c
+SRC =	./philo.c \
+		./init.c \
+		./ft_free.c \
+		./creat_forks.c \
+		./utils.c \
+
 OBJ = $(SRC:.c=.o)
 
 all: $(NAME)
