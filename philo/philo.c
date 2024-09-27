@@ -1,69 +1,111 @@
 #include "./include/philo.h"
 
-void *ft_pthread(void *data2)
+unsigned long     ft_read_protect(void *value, pthread_mutex_t *mutex)
 {
-        t_data  *data;
-        t_philo *philo;
-        int     i;
+        unsigned long i;
 
-        data = (t_data *)data2;
-        pthread_mutex_lock(&data->main_mutex_left);
-        i = data->i;
-        printf("++++++++ {%d} ++++++++\n", i);
-        pthread_mutex_unlock(&data->main_mutex_left);
-        pthread_mutex_lock(&data->main_mutex_right);
-        philo = ft_return_id_node(data->philo, i);
-        if (!philo)
-                ft_free_all(data, "ERROR NULL in PHILO\n", 4);
-        printf("++++++ {index : %d} ++++++\n", philo->index);
-        pthread_mutex_unlock(&data->main_mutex_right);
-        while (1)
+        i = 0;
+        pthread_mutex_lock(mutex);
+        i = *((unsigned long *)value);
+        pthread_mutex_unlock(mutex);
+        return (i);
+}
+
+void     ft_write_protect(void *addr, unsigned long new, pthread_mutex_t *mutex)
+{
+        pthread_mutex_lock(mutex);
+        *((unsigned long *)addr) = new;
+        pthread_mutex_unlock(mutex);
+}
+
+void    ft_usleep(int time)
+{
+        unsigned long i;
+
+        i = time * 1000;
+        usleep(i);
+}
+
+void    ft_is_eating(t_data *data, t_philo *philo)
+{
+       pthread_mutex_lock(philo->left_f);
+       pthread_mutex_lock(philo->rghit_f);
+       printf("%lu %d has taken a fork\n", ft_get_timestamp(data), philo->id + 1);
+       printf("%lu %d is eating\n", ft_get_timestamp(data), philo->id + 1);
+       ft_usleep(data->t_eat);
+       philo->last_meal = ft_get_timestamp(data);
+       pthread_mutex_lock(philo->left_f);
+       pthread_mutex_lock(philo->rghit_f);
+}
+
+void    *ft_routine(void *arg)
+{
+        t_philo *philo;
+        t_data  *data;
+
+        philo = (t_philo *)arg;
+        data = (t_data *)philo->data;
+        pthread_mutex_lock(&data->main_mutex);
+        pthread_mutex_unlock(&data->main_mutex);
+        while (ft_read_protect(&philo->died_flag, philo->rghit_f) != 1)
         {
-                pthread_mutex_lock(philo->left_f);
-                pthread_mutex_lock(philo->rghit_f);
-                printf("%lu %d has taken a fork\n", ft_get_timestamp(data), i);
-                usleep(data->t_eat * 1000);
-                printf("%lu %d is eating\n", ft_get_timestamp(data), i);
-                pthread_mutex_unlock(philo->left_f);
-                usleep(data->t_sleep * 1000);
-                printf("%lu %d is sleeping\n", ft_get_timestamp(data), i);
-                pthread_mutex_unlock(philo->rghit_f);
-                printf("%lu %d is thinking\n", ft_get_timestamp(data), i);
-                usleep(100*1000);
+                ft_is_eating(data ,philo);
+                printf("%lu %d is sleeping\n", ft_get_timestamp(philo->data), philo->id + 1);
+                ft_usleep(data->t_sleep);
+                printf("%lu %d is thinking\n", ft_get_timestamp(philo->data), philo->id + 1);
         }
         return (NULL);
 }
 
-void ft_create_thread(t_data *data, t_philo *philo)
+void    ft_monitor(t_data *data, t_philo *philo)
 {
         t_philo *head;
+
+        if (!philo)
+                return ;
+        head = philo;
+        while (1)
+        {
+                if ((ft_get_timestamp(data) - head->last_meal) > (unsigned long)data->t_die)
+                {
+                        ft_write_protect(&head->died_flag, 1, head->rghit_f);
+                        break;
+                }
+                if (!head->next)
+                        head = philo;
+                else
+                        head = head->next;
+        }
+        printf("%lu %d died\n", ft_get_timestamp(philo->data), philo->id + 1);
+}
+
+void    ft_creat_threads(t_data *data, t_philo *philo)
+{
+        int     i;
         int     j;
+        t_philo *head;
 
         head = philo;
-        data->i = 0;
         j = 0;
-        pthread_mutex_lock(&data->main_mutex_right); // need to protect mutex
-        while (data->i < data->n_philo)
+        i = 0;
+        if (!data || !philo)
+                return ;
+        pthread_mutex_lock(&data->main_mutex);
+        while (i < data->n_philo)
         {
-                pthread_mutex_lock(&data->main_mutex_left); // need to protect mutex
-                if (pthread_create(&data->th[data->i], NULL, ft_pthread, data) != 0)
-                        ft_free_all(data, "Failed Creating Thread\n", 2);
+                if (pthread_create(&data->th[i++], NULL, ft_routine, head) != 0)
+                        ft_free_all(data, "Error in creating threads\n", 1);
                 if (head)
-                {
-                        head->id = data->th[data->i];
-                        head->index = data->i;
-                        head = head->next;
-                }
-                // printf("$$$$$$$$$ {i : %d} $$$$$$$$$$\n", data->i);
-                pthread_mutex_unlock(&data->main_mutex_left); // need tp protect mutex
-                usleep(1000);
-                data->i++;
+                   head = head->next;
+                i++;
         }
-        pthread_mutex_unlock(&data->main_mutex_right); // need tp protect mutex
+        pthread_mutex_unlock(&data->main_mutex);
         if (gettimeofday(&data->start, NULL) != 0)
-                ft_free_all(data, "Failed gettimeofday\n", 2);
+                ft_free_all(data, "Error in gettimeofday\n", 1);
+        ft_monitor(data, philo);
         while (j < data->n_philo)
-                pthread_join(data->th[j++], NULL);
+                if (pthread_join(data->th[j++], NULL) != 0)
+                        ft_free_all(data, "Error in pthread join\n", 1);
 }
 
 int main(int ac, char **av)
@@ -80,7 +122,7 @@ int main(int ac, char **av)
                 ft_free_all(data, "Input Error\n", 1);
         ft_init_mutex(data);
         ft_setup_forks(data);
-        ft_create_thread(data, data->philo);
+        ft_creat_threads(data, data->philo);
 
         ft_destroy_mutex(data);
         printf("+++++++++++++ { DONE} +++++++++++++++\n");

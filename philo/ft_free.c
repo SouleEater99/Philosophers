@@ -23,8 +23,7 @@ void ft_destroy_mutex(t_data *data)
         i = 0;
         if (!data)
                 return;
-        pthread_mutex_destroy(&data->main_mutex_left);
-        pthread_mutex_destroy(&data->main_mutex_right);
+        pthread_mutex_destroy(&data->main_mutex);
         while (i < data->n_philo)
         {
                 pthread_mutex_destroy(&data->forks[i++]);

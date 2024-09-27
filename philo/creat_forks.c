@@ -13,6 +13,8 @@ t_philo *ft_create_node(t_data *data)
         else
                 new->left_f = &data->forks[data->i - 1];
         new->rghit_f = &data->forks[data->i];
+        new->data = data;
+        new->id = data->i;
         new->next = NULL;
         return (new);
 }

@@ -10,8 +10,10 @@
 
 typedef struct s_philo
 {
-    pthread_t id;
-    int index;
+    int id;
+    unsigned long died_flag;
+    unsigned long last_meal;
+    void      *data;
     pthread_mutex_t *left_f;
     pthread_mutex_t *rghit_f;
     struct s_philo *next;
@@ -31,15 +33,14 @@ typedef struct s_data
     int mutex_flag;
     pthread_t *th;
     pthread_mutex_t *forks;
-    pthread_mutex_t main_mutex_left;
-    pthread_mutex_t main_mutex_right;
+    pthread_mutex_t main_mutex;
     struct timeval start;
     t_philo *philo;
 
 } t_data;
 
-void *ft_pthread(void *data2);
-void ft_create_thread(t_data *data, t_philo *philo);
+
+
 unsigned long ft_get_timestamp(t_data *data);
 t_philo *ft_return_id_node(t_philo *philo, int i);
 int ft_atoi(const char *str);
@@ -52,5 +53,12 @@ void ft_add_node_to_back(t_philo *philo, t_philo *new);
 void ft_setup_forks(t_data *data);
 void ft_init_mutex(t_data *data);
 t_data *ft_init_data(int ac, char **av);
+unsigned long     ft_read_protect(void *value, pthread_mutex_t *mutex);
+void     ft_write_protect(void *addr, unsigned long new, pthread_mutex_t *mutex);
+void    ft_usleep(int time);
+void    ft_is_eating(t_data *data, t_philo *philo);
+void    *ft_routine(void *arg);
+void    ft_monitor(t_data *data, t_philo *philo);
+void    ft_creat_threads(t_data *data, t_philo *philo);
 
 #endif

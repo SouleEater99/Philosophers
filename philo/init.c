@@ -7,9 +7,7 @@ void ft_init_mutex(t_data *data)
         i = 0;
         if (!data)
                 return;
-        if (pthread_mutex_init(&data->main_mutex_left, NULL) != 0)
-                ft_free_all(data, "Error in init mutex\n", 3);
-        if (pthread_mutex_init(&data->main_mutex_right, NULL) != 0)
+        if (pthread_mutex_init(&data->main_mutex, NULL) != 0)
                 ft_free_all(data, "Error in init mutex\n", 3);
         while (i < data->n_philo)
                 if (pthread_mutex_init(&data->forks[i++], NULL) != 0)

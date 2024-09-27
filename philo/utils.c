@@ -70,7 +70,7 @@ t_philo         *ft_return_id_node(t_philo *philo, int i)
         ph = philo;
         while (ph)
         {
-                if (ph->index == i)
+                if (ph->id == i)
                         break;
                 ph = ph->next;
         }
