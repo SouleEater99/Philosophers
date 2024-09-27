@@ -1,13 +1,19 @@
 CC = cc 
-CFLAGS = -Wall -Wextra -Werror -fsanitize=address -g3
+CFLAG = -Wall -Wextra -Werror #-fsanitize=address -g3
+PTHREAD = -pthread
 NAME = philo
-SRC = ./src/main.c
+SRC =	./philo.c \
+		./init.c \
+		./ft_free.c \
+		./creat_forks.c \
+		./utils.c \
+
 OBJ = $(SRC:.c=.o)
 
-all : $(NAME)
+all: $(NAME)
 
-$(NAME) : $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
+$(NAME) : $(SRC)
+	$(CC) $(CFLAG) $(PTHREAD)  $(SRC) -o $(NAME)
 
 clean :
 	rm -rf $(OBJ)
@@ -15,4 +21,4 @@ clean :
 fclean : clean
 	rm -rf $(NAME)
 
-re:
+re : fclean all
