@@ -11,11 +11,12 @@
 typedef struct s_philo
 {
     int id;
-    unsigned long died_flag;
     unsigned long last_meal;
     void      *data;
     pthread_mutex_t *left_f;
     pthread_mutex_t *rghit_f;
+    pthread_mutex_t write_mutex;
+    pthread_mutex_t meal_mutex;
     struct s_philo *next;
 } t_philo;
 
@@ -31,9 +32,14 @@ typedef struct s_data
     int t_sleep;
     int n_philo_eat;
     int mutex_flag;
+    unsigned long died_flag;
     pthread_t *th;
     pthread_mutex_t *forks;
     pthread_mutex_t main_mutex;
+    pthread_mutex_t dead_mutex;
+    pthread_mutex_t write_mutex;
+    pthread_mutex_t read_mutex;
+    
     struct timeval start;
     t_philo *philo;
 
@@ -55,10 +61,11 @@ void ft_init_mutex(t_data *data);
 t_data *ft_init_data(int ac, char **av);
 unsigned long     ft_read_protect(void *value, pthread_mutex_t *mutex);
 void     ft_write_protect(void *addr, unsigned long new, pthread_mutex_t *mutex);
-void    ft_usleep(int time);
+void    ft_usleep(t_data *data, int time);
 void    ft_is_eating(t_data *data, t_philo *philo);
 void    *ft_routine(void *arg);
 void    ft_monitor(t_data *data, t_philo *philo);
 void    ft_creat_threads(t_data *data, t_philo *philo);
+void    ft_print_msg(char *msg ,t_philo *philo, int id);
 
 #endif

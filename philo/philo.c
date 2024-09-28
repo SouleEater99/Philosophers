@@ -18,24 +18,37 @@ void     ft_write_protect(void *addr, unsigned long new, pthread_mutex_t *mutex)
         pthread_mutex_unlock(mutex);
 }
 
-void    ft_usleep(int time)
+void    ft_usleep(t_data *data, int i)
 {
-        unsigned long i;
+        unsigned long start;
 
-        i = time * 1000;
-        usleep(i);
+        start = ft_get_timestamp(data);
+        while (ft_get_timestamp(data) - start < (unsigned long)i)
+                ;
+}
+
+void    ft_print_msg(char *msg ,t_philo *philo, int id)
+{
+        t_data *data;
+
+        data = philo->data;
+        pthread_mutex_lock(&philo->write_mutex);
+        if (ft_read_protect(&data->died_flag, &data->dead_mutex) != 1)
+                printf("%lu %d %s", ft_get_timestamp(data), id, msg);
+        pthread_mutex_unlock(&philo->write_mutex);
 }
 
 void    ft_is_eating(t_data *data, t_philo *philo)
 {
-       pthread_mutex_lock(philo->left_f);
        pthread_mutex_lock(philo->rghit_f);
-       printf("%lu %d has taken a fork\n", ft_get_timestamp(data), philo->id + 1);
-       printf("%lu %d is eating\n", ft_get_timestamp(data), philo->id + 1);
-       ft_usleep(data->t_eat);
-       philo->last_meal = ft_get_timestamp(data);
+       ft_print_msg("has taken a fork\n", philo, philo->id + 1);
        pthread_mutex_lock(philo->left_f);
-       pthread_mutex_lock(philo->rghit_f);
+       ft_print_msg("has taken a fork\n", philo, philo->id + 1);
+       ft_print_msg("is eating\n", philo, philo->id + 1);
+       ft_write_protect(&philo->last_meal, ft_get_timestamp(data), &philo->meal_mutex);
+       ft_usleep(data, data->t_eat);
+       pthread_mutex_unlock(philo->left_f);
+       pthread_mutex_unlock(philo->rghit_f);
 }
 
 void    *ft_routine(void *arg)
@@ -47,12 +60,15 @@ void    *ft_routine(void *arg)
         data = (t_data *)philo->data;
         pthread_mutex_lock(&data->main_mutex);
         pthread_mutex_unlock(&data->main_mutex);
-        while (ft_read_protect(&philo->died_flag, philo->rghit_f) != 1)
+        if (philo->id % 2 == 1)
+                ft_usleep(data, 1);
+        while (ft_read_protect(&data->died_flag, &data->dead_mutex) != 1)
         {
+
                 ft_is_eating(data ,philo);
-                printf("%lu %d is sleeping\n", ft_get_timestamp(philo->data), philo->id + 1);
-                ft_usleep(data->t_sleep);
-                printf("%lu %d is thinking\n", ft_get_timestamp(philo->data), philo->id + 1);
+                ft_print_msg("is sleeping\n", philo, philo->id + 1);
+                ft_usleep(data, data->t_sleep);
+                ft_print_msg("is thinking\n", philo, philo->id + 1);
         }
         return (NULL);
 }
@@ -66,9 +82,12 @@ void    ft_monitor(t_data *data, t_philo *philo)
         head = philo;
         while (1)
         {
-                if ((ft_get_timestamp(data) - head->last_meal) > (unsigned long)data->t_die)
+                if ((ft_get_timestamp(data) - ft_read_protect(&head->last_meal, &head->meal_mutex)) >= (unsigned long)data->t_die)
                 {
-                        ft_write_protect(&head->died_flag, 1, head->rghit_f);
+                        ft_write_protect(&data->died_flag, 1, &data->dead_mutex);
+                        pthread_mutex_lock(&data->write_mutex);
+                        printf("%lu %d died\n", ft_get_timestamp(philo->data), philo->id + 1);
+                        pthread_mutex_unlock(&data->write_mutex);
                         break;
                 }
                 if (!head->next)
@@ -76,7 +95,6 @@ void    ft_monitor(t_data *data, t_philo *philo)
                 else
                         head = head->next;
         }
-        printf("%lu %d died\n", ft_get_timestamp(philo->data), philo->id + 1);
 }
 
 void    ft_creat_threads(t_data *data, t_philo *philo)
@@ -93,15 +111,15 @@ void    ft_creat_threads(t_data *data, t_philo *philo)
         pthread_mutex_lock(&data->main_mutex);
         while (i < data->n_philo)
         {
-                if (pthread_create(&data->th[i++], NULL, ft_routine, head) != 0)
+                if (pthread_create(&data->th[i], NULL, ft_routine, head) != 0)
                         ft_free_all(data, "Error in creating threads\n", 1);
                 if (head)
                    head = head->next;
                 i++;
         }
-        pthread_mutex_unlock(&data->main_mutex);
         if (gettimeofday(&data->start, NULL) != 0)
                 ft_free_all(data, "Error in gettimeofday\n", 1);
+        pthread_mutex_unlock(&data->main_mutex);
         ft_monitor(data, philo);
         while (j < data->n_philo)
                 if (pthread_join(data->th[j++], NULL) != 0)

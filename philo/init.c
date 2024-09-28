@@ -8,7 +8,12 @@ void ft_init_mutex(t_data *data)
         if (!data)
                 return;
         if (pthread_mutex_init(&data->main_mutex, NULL) != 0)
+                ft_free_all(data, "Error in init mutex\n", 3); 
+        if (pthread_mutex_init(&data->dead_mutex, NULL) != 0)
                 ft_free_all(data, "Error in init mutex\n", 3);
+        if (pthread_mutex_init(&data->write_mutex, NULL) != 0)
+                ft_free_all(data, "Error in init mutex\n", 3);
+        if (pthread_mutex_init(&data->write_mutex, NULL) != 0)
         while (i < data->n_philo)
                 if (pthread_mutex_init(&data->forks[i++], NULL) != 0)
                         ft_free_all(data, "Error in init mutex\n", 3);
