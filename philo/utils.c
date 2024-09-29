@@ -27,7 +27,9 @@ int ft_check_args(t_data *data)
         while (data->av[i])
                 if (ft_str_are_numbers(data->av[i++]) == 0)
                         return (0);
-        if (data->n_philo < 0 || data->n_philo_eat < 0 || data->t_die < 0)
+        if (data->ac == 6 && data->n_philo_eat <= 0)
+                return (0);
+        if (data->n_philo <= 0 || data->n_philo_eat < 0 || data->t_die <= 0)
                 return (0);
         else if (data->t_eat < 0 || data->t_sleep < 0)
                 return (0);

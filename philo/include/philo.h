@@ -13,10 +13,13 @@ typedef struct s_philo
     int id;
     unsigned long last_meal;
     void      *data;
+    int n_philo_eat;
+    int eating_flag;
     pthread_mutex_t *left_f;
     pthread_mutex_t *rghit_f;
     pthread_mutex_t write_mutex;
     pthread_mutex_t meal_mutex;
+    pthread_mutex_t eat_mutex;
     struct s_philo *next;
 } t_philo;
 
@@ -62,7 +65,7 @@ t_data *ft_init_data(int ac, char **av);
 unsigned long     ft_read_protect(void *value, pthread_mutex_t *mutex);
 void     ft_write_protect(void *addr, unsigned long new, pthread_mutex_t *mutex);
 void    ft_usleep(t_data *data, int time);
-void    ft_is_eating(t_data *data, t_philo *philo);
+int     ft_is_eating(t_data *data, t_philo *philo);
 void    *ft_routine(void *arg);
 void    ft_monitor(t_data *data, t_philo *philo);
 void    ft_creat_threads(t_data *data, t_philo *philo);

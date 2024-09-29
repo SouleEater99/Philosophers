@@ -15,11 +15,12 @@ t_philo *ft_create_node(t_data *data)
         new->rghit_f = &data->forks[data->i];
         new->data = data;
         new->id = data->i;
+        new->n_philo_eat = data->n_philo_eat;
         if (pthread_mutex_init(&new->write_mutex, NULL) != 0)
                 ft_free_all(data, "Error in init mutex\n", 3);
-        // if (pthread_mutex_init(&new->read_mutex, NULL) != 0)
-                // ft_free_all(data, "Error in init mutex\n", 3);
         if (pthread_mutex_init(&new->meal_mutex, NULL) != 0)
+                ft_free_all(data, "Error in init mutex\n", 3);
+        if (pthread_mutex_init(&new->eat_mutex, NULL) != 0)
                 ft_free_all(data, "Error in init mutex\n", 3);
         new->next = NULL;
         return (new);

@@ -38,7 +38,7 @@ t_data *ft_init_data(int ac, char **av)
         if (ac == 6)
                 data->n_philo_eat = ft_atoi(av[5]);
         else
-                data->n_philo_eat = -1;
+                data->n_philo_eat = 0;
         data->th = malloc(sizeof(pthread_t) * data->n_philo);
         data->forks = malloc(sizeof(pthread_mutex_t) * data->n_philo);
         if (!data->th || !data->forks)
