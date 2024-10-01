@@ -70,5 +70,6 @@ void    *ft_routine(void *arg);
 void    ft_monitor(t_data *data, t_philo *philo);
 void    ft_creat_threads(t_data *data, t_philo *philo);
 void    ft_print_msg(char *msg ,t_philo *philo, int id);
+int     ft_check_is_all_eat(t_philo *philo);
 
 #endif

@@ -57,10 +57,8 @@ int ft_is_eating(t_data *data, t_philo *philo)
                 ft_print_msg("has taken a fork\n", philo, philo->id + 1);
         }
         ft_print_msg("is eating\n", philo, philo->id + 1);
-        ft_write_protect(&philo->last_meal, ft_get_timestamp(data), &philo->meal_mutex);
-        if (--philo->n_philo_eat == 0)
-                return ((philo->eating_flag = 1), 0);
         ft_usleep(data, data->t_eat);
+        ft_write_protect(&philo->last_meal, ft_get_timestamp(data), &philo->meal_mutex);
         pthread_mutex_unlock(philo->rghit_f);
         pthread_mutex_unlock(philo->left_f);
         return (1);
@@ -83,8 +81,27 @@ void *ft_routine(void *arg)
                 ft_print_msg("is sleeping\n", philo, philo->id + 1);
                 ft_usleep(data, data->t_sleep);
                 ft_print_msg("is thinking\n", philo, philo->id + 1);
+                if (--philo->n_philo_eat == 0)
+                {
+                        ft_write_protect(&philo->eating_flag, 1, &philo->eat_mutex);
+                        break;
+                }
         }
         return (NULL);
+}
+
+int     ft_check_is_all_eat(t_philo *philo)
+{
+        t_philo *head;
+
+        head = philo;
+        while (head)
+        {
+                if (ft_read_protect(&head->eating_flag, &head->eat_mutex) != 1)
+                        return (0);
+                head = head->next;                
+        }
+        return (1);
 }
 
 void ft_monitor(t_data *data, t_philo *philo)
@@ -96,13 +113,18 @@ void ft_monitor(t_data *data, t_philo *philo)
         head = philo;
         while (1)
         {
-                if (ft_read_protect(&head->eating_flag, &head->eat_mutex) != 1 && (ft_get_timestamp(data) - ft_read_protect(&head->last_meal, &head->meal_mutex)) > (unsigned long)data->t_die)
-                {
-                        ft_write_protect(&data->died_flag, 1, &data->dead_mutex);
-                        pthread_mutex_lock(&data->write_mutex);
-                        printf("%lu %d died\n", ft_get_timestamp(philo->data), philo->id + 1);
-                        pthread_mutex_unlock(&data->write_mutex);
+                if (ft_check_is_all_eat(philo) == 1)
                         break;
+                if (ft_read_protect(&head->eating_flag, &head->eat_mutex) != 1)
+                {
+                        if ((ft_get_timestamp(data) - ft_read_protect(&head->last_meal, &head->meal_mutex)) >= (unsigned long)data->t_die)
+                                {
+                                        ft_write_protect(&data->died_flag, 1, &data->dead_mutex);
+                                        pthread_mutex_lock(&data->write_mutex);
+                                        printf("%lu %d died\n", ft_get_timestamp(philo->data), philo->id + 1);
+                                        pthread_mutex_unlock(&data->write_mutex);
+                                        break;
+                                }
                 }
                 if (!head->next)
                         head = philo;
