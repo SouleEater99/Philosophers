@@ -50,6 +50,7 @@ void ft_destroy_mutex(t_data *data)
                 pthread_mutex_destroy(&head->meal_mutex);
                 pthread_mutex_destroy(&head->write_mutex);
                 pthread_mutex_destroy(&head->eat_mutex);
+                pthread_mutex_destroy(&head->still_eat_mutex);
                 head = head->next;
         }
         while (i < data->n_philo)

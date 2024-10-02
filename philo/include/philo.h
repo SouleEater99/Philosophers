@@ -20,6 +20,8 @@ typedef struct s_philo
     pthread_mutex_t write_mutex;
     pthread_mutex_t meal_mutex;
     pthread_mutex_t eat_mutex;
+    pthread_mutex_t still_eat_mutex;
+    int     still_eat;
     struct s_philo *next;
 } t_philo;
 

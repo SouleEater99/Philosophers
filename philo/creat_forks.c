@@ -22,6 +22,8 @@ t_philo *ft_create_node(t_data *data)
                 ft_free_all(data, "Error in init mutex\n", 3);
         if (pthread_mutex_init(&new->eat_mutex, NULL) != 0)
                 ft_free_all(data, "Error in init mutex\n", 3);
+        if (pthread_mutex_init(&new->still_eat_mutex, NULL) != 0)
+                ft_free_all(data, "Error in init mutex\n", 3);
         new->next = NULL;
         return (new);
 }
