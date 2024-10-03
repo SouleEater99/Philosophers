@@ -89,6 +89,7 @@ void *ft_routine(void *arg)
                         ft_write_protect(&philo->eating_flag, 1, &philo->eat_mutex);
                         break;
                 }
+                usleep(1000);
         }
         return (NULL);
 }
@@ -125,8 +126,6 @@ void ft_monitor(t_data *data, t_philo *philo)
                                 if ((ft_get_timestamp(data) - ft_read_protect(&head->last_meal, &head->meal_mutex)) >= (unsigned long)data->t_die)
                                 {
 
-                                        printf("last meal is %lu of %d\n", head->last_meal, head->id + 1);
-                                        printf("time to die is %d\n", data->t_die);
                                         ft_write_protect(&data->died_flag, 1, &data->dead_mutex);
                                         usleep(100);
                                         pthread_mutex_lock(&data->write_mutex);
@@ -189,6 +188,5 @@ int main(int ac, char **av)
         ft_creat_threads(data, data->philo);
 
         ft_destroy_mutex(data);
-        printf("+++++++++++++ { DONE} +++++++++++++++\n");
         return (0);
 }
