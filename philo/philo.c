@@ -89,7 +89,7 @@ void *ft_routine(void *arg)
                         ft_write_protect(&philo->eating_flag, 1, &philo->eat_mutex);
                         break;
                 }
-                usleep(1000);
+                usleep(3000);
         }
         return (NULL);
 }
