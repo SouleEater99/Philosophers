@@ -78,6 +78,15 @@ void *ft_routine(void *arg)
         data = (t_data *)philo->data;
         pthread_mutex_lock(&data->main_mutex);
         pthread_mutex_unlock(&data->main_mutex);
+        if (data->n_philo == 1)
+        {
+                pthread_mutex_lock(philo->rghit_f);
+                ft_print_msg("has taken a fork\n", philo, philo->id + 1);
+                ft_usleep(data, data->t_die);
+                ft_write_protect(&philo->still_eat, 1, &philo->still_eat_mutex);
+                pthread_mutex_unlock(philo->rghit_f);
+                return (NULL);
+        }
         while (ft_read_protect(&data->died_flag, &data->dead_mutex) != 1)
         {
                 ft_is_eating(data, philo);
@@ -89,7 +98,7 @@ void *ft_routine(void *arg)
                         ft_write_protect(&philo->eating_flag, 1, &philo->eat_mutex);
                         break;
                 }
-                usleep(3000);
+                usleep(800);
         }
         return (NULL);
 }
