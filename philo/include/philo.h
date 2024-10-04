@@ -43,7 +43,6 @@ typedef struct s_data
     pthread_mutex_t main_mutex;
     pthread_mutex_t dead_mutex;
     pthread_mutex_t write_mutex;
-    pthread_mutex_t read_mutex;
     
     struct timeval start;
     t_philo *philo;

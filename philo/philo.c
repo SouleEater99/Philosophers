@@ -24,7 +24,7 @@ void ft_usleep(t_data *data, int i)
 
         start = ft_get_timestamp(data);
         while (ft_get_timestamp(data) - start < (unsigned long)i)
-                ;
+                usleep(100);
 }
 
 void ft_print_msg(char *msg, t_philo *philo, int id)
@@ -60,9 +60,18 @@ int ft_is_eating(t_data *data, t_philo *philo)
         ft_print_msg("is eating\n", philo, philo->id + 1);
         ft_write_protect(&philo->last_meal, ft_get_timestamp(data), &philo->meal_mutex);
         if (data->t_die <= data->t_eat)
+        {
                 ft_usleep(data, data->t_die);
+        }
+        else if (data->n_philo % 2 == 1 )
+        {
+                if (data->n_philo == (philo->id + 1))
+                        ft_usleep(data, data->t_eat * 2);
+        }
         else
+        {
                 ft_usleep(data, data->t_eat);
+        }
         ft_write_protect(&philo->still_eat, 1, &philo->still_eat_mutex);
         pthread_mutex_unlock(philo->rghit_f);
         pthread_mutex_unlock(philo->left_f);
@@ -87,6 +96,8 @@ void *ft_routine(void *arg)
                 pthread_mutex_unlock(philo->rghit_f);
                 return (NULL);
         }
+        if ((philo->id + 1) % 2 == 1)
+                ft_usleep(data, 10);
         while (ft_read_protect(&data->died_flag, &data->dead_mutex) != 1)
         {
                 ft_is_eating(data, philo);
@@ -98,7 +109,6 @@ void *ft_routine(void *arg)
                         ft_write_protect(&philo->eating_flag, 1, &philo->eat_mutex);
                         break;
                 }
-                usleep(800);
         }
         return (NULL);
 }
@@ -136,7 +146,7 @@ void ft_monitor(t_data *data, t_philo *philo)
                                 {
 
                                         ft_write_protect(&data->died_flag, 1, &data->dead_mutex);
-                                        usleep(100);
+                                        usleep(300);
                                         pthread_mutex_lock(&data->write_mutex);
                                         printf("%lu %d died\n", ft_get_timestamp(head->data), head->id + 1);
                                         pthread_mutex_unlock(&data->write_mutex);
